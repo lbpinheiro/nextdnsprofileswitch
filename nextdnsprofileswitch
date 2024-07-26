@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# nextdnsprofileswitch
+#
+# This script allows you to switch NextDNS profiles and restart the NextDNS service.
+# It is intended for use on Unix-like systems with `nextdns` installed.
+#
+# Repository: https://github.com/lbpinheiro/nextdnsprofileswitch
+# Author: Lucas Batochi Pinheiro
+# License: MIT License
+# Version: 1.0.0
+# Date: 2024-07-26
+#
+# Description:
+# This script sets a NextDNS profile based on a predefined identifier and restarts
+# the NextDNS service. It also checks if the script is run as root and if `nextdns`
+# is installed on the system.
+#
+# Usage:
+# 1. Edit the 'profiles' array in the script to include your profile identifiers.
+# 2. Run the script using 'sudo' with the desired profile identifier.
+#
+# Example:
+#   sudo ./nextdnsprofileswitch myprofile
+#
+# Ensure that you have set the script as executable:
+#   chmod +x nextdnsprofileswitch
+
+# Check if the script is being run as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
+fi
+
+# Check if 'nextdns' is installed
+if ! command -v nextdns &> /dev/null; then
+    echo "The 'nextdns' program is not installed."
+    exit 1
+fi
+
+# Define nextdns profiles with their IDs and identifiers
+# EDIT HERE ###########
+declare -A profiles
+profiles=(
+    ["profileA"]="9a9a9a9"
+    ["profileB"]="8b8b8b8"
+    ["profileC"]="7c7c7c7"
+    ["profileD"]="6d6d6d6"
+)
+#####################
+
+# Check if an argument was provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <profile_identifier>"
+    exit 1
+fi
+
+# Get the profile identifier from the command-line argument
+profile_identifier=$1
+
+# Look up the profile ID based on the provided identifier
+profile_id=${profiles[$profile_identifier]}
+
+if [ -z "$profile_id" ]; then
+    echo "No profile found for identifier: $profile_identifier"
+    exit 1
+fi
+
+# Set the profile and restart nextdns
+nextdns config set -profile "$profile_id"
+nextdns restart
+
+echo "Profile set to $profile_id."
